@@ -1,0 +1,8 @@
+Model,AUC
+XGBoost,0.9706
+Gradient Boosting,0.9625
+Random Forest,0.9621
+Logistic Regression,0.8714
+Naive Bayes,0.8299
+K-Nearest Neighbors,0.8228
+Decision Tree,0.8104
