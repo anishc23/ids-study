@@ -1,0 +1,6 @@
+Class,XGBoost_Alone_F1,Proposed_Hybrid_F1,Improvement
+DoS,87.33,87.78,0.45
+Probe,78.36,81.08,2.72
+R2L,1.51,3.45,1.94
+U2R,25.0,40.74,15.74
+normal,78.55,80.38,1.83

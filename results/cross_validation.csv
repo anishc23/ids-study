@@ -3,6 +3,6 @@ Decision Tree,99.78,0.02,99.74,99.81
 Random Forest,99.88,0.03,99.84,99.91
 Naive Bayes,88.62,0.35,88.18,89.04
 K-Nearest Neighbors,99.55,0.02,99.53,99.59
-Logistic Regression,94.99,0.25,94.75,95.32
+Logistic Regression,94.99,0.25,94.76,95.32
 XGBoost,99.9,0.03,99.85,99.93
 Gradient Boosting,99.56,0.02,99.53,99.59

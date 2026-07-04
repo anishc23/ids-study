@@ -1,0 +1,11 @@
+Feature,Mean_Abs_SHAP
+dst_host_srv_diff_host_rate,1.7130111
+src_bytes,1.6238023
+service,1.2790215
+duration,0.8275613
+dst_host_same_src_port_rate,0.82190245
+logged_in,0.78459334
+dst_host_serror_rate,0.67006195
+dst_host_count,0.29537857
+count,0.29272246
+is_guest_login,0.22374657
