@@ -1,0 +1,5 @@
+Version,Accuracy,Macro_F1,Routed_%,F1_DoS,F1_Probe,F1_R2L,F1_U2R,F1_normal
+"A: No SMOTE, Routing OFF (always consult)",77.78,60.83,63.54,87.33,78.36,23.77,34.88,79.8
+"B: No SMOTE, Routing ON (selective)",77.28,60.27,11.39,87.33,78.33,17.64,38.64,79.42
+"C: SMOTE, Routing OFF (always consult)",77.75,61.52,63.54,87.33,78.36,23.41,38.71,79.78
+"D: SMOTE, Routing ON (selective) = HSR-IDS",77.74,61.59,11.39,87.33,78.33,23.4,39.13,79.77
