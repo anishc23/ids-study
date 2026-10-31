@@ -77,7 +77,7 @@ Two properties of this table drive everything that follows:
 - **Severe imbalance.** U2R has 52 training instances against 67,343 normal — a ratio of roughly 1:1,295.
 - **Train/test distribution shift.** The official test split deliberately contains attack variants absent from training, and the R2L proportion *inverts* (995 train → 2,887 test). This is why every model in the benchmark drops from >99% cross-validated F1 to 74–80% on the held-out test set. That gap is a feature of the benchmark, not a bug in the pipeline — it simulates a deployed detector meeting tomorrow's attacks.
 
-> **Note on data files.** `KDDTrain+.txt` and `KDDTest+.txt` are included in `data/`, so the notebook runs without additional setup. NSL-KDD is publicly distributed for research by the [Canadian Institute for Cybersecurity, University of New Brunswick](https://www.unb.ca/cic/datasets/nsl.html).
+> **Note on data files.** `KDDTrain+.txt` and `KDDTest+.txt` are included in `data/`, so the notebook runs without additional setup. NSL-KDD was published by the [Canadian Institute for Cybersecurity, University of New Brunswick](https://www.unb.ca/cic/datasets/nsl.html), whose dataset page says, as of November 2026, that it is no longer available; see [License and Acknowledgements](#license-and-acknowledgements) for the terms covering the copy here.
 
 ---
 
