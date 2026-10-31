@@ -487,4 +487,4 @@ If this work is useful to you:
 
 Developed at Ramrao Adik Institute of Technology, D.Y. Patil Deemed to be University, Navi Mumbai.
 
-**License.** Code released under the MIT License — see `LICENSE`. The NSL-KDD dataset is subject to its own terms from UNB and is not redistributed here.
+**License.** Code released under the MIT License — see `LICENSE`. The NSL-KDD files in `data/` are not covered by the MIT License; they are redistributed under UNB's terms, which require citing the dataset and the paper above.
