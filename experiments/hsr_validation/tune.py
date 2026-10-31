@@ -7,7 +7,6 @@ from sklearn.preprocessing import StandardScaler
 import common
 from common import *
 
-common.TUNING_ONLY = True
 SEEDS = range(10)
 
 
@@ -57,17 +56,19 @@ def select(df, y, enc, fit, val, seed):
     return best, grid
 
 
-df = read('KDDTrain+.txt')
-y = targets(df)
-enc = encoders(df)
-out = {}
-for arm, split in (('S', type_holdout), ('V', stratified)):
-    rows = []
-    for s in SEEDS:
-        fit, val, held = split(df, y, s)
-        best, grid = select(df, y, enc, fit, val, s)
-        rows.append({'seed': s, 'held_out': held, 'selected': best,
-                     'fit_rows': int(fit.sum()), 'val_rows': int(val.sum()), 'grid': grid})
-        print(arm, s, best, held, flush=True)
-    out[arm] = rows
-json.dump(out, open('thresholds.json', 'w'), indent=1, sort_keys=True)
+if __name__ == '__main__':
+    common.TUNING_ONLY = True
+    df = read('KDDTrain+.txt')
+    y = targets(df)
+    enc = encoders(df)
+    out = {}
+    for arm, split in (('S', type_holdout), ('V', stratified)):
+        rows = []
+        for s in SEEDS:
+            fit, val, held = split(df, y, s)
+            best, grid = select(df, y, enc, fit, val, s)
+            rows.append({'seed': s, 'held_out': held, 'selected': best,
+                         'fit_rows': int(fit.sum()), 'val_rows': int(val.sum()), 'grid': grid})
+            print(arm, s, best, held, flush=True)
+        out[arm] = rows
+    json.dump(out, open('thresholds.json', 'w'), indent=1, sort_keys=True)

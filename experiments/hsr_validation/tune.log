@@ -1,0 +1,20 @@
+S 0 {'low': 0.9, 'certain': 0.9, 'macro_f1': 27.92, 'routed': np.float64(12.39)} {'DoS': ['neptune', 'teardrop'], 'Probe': ['satan'], 'R2L': ['guess_passwd', 'imap', 'multihop'], 'U2R': ['loadmodule']}
+S 1 {'low': 0.5, 'certain': 0.9, 'macro_f1': 17.39, 'routed': np.float64(8.77)} {'DoS': ['land', 'neptune'], 'Probe': ['ipsweep'], 'R2L': ['imap', 'spy', 'warezclient'], 'U2R': ['rootkit']}
+S 2 {'low': 0.5, 'certain': 0.99, 'macro_f1': 42.51, 'routed': np.float64(1.35)} {'DoS': ['land', 'smurf'], 'Probe': ['satan'], 'R2L': ['guess_passwd', 'phf', 'warezclient'], 'U2R': ['rootkit']}
+S 3 {'low': 0.5, 'certain': 0.999, 'macro_f1': 51.49, 'routed': np.float64(5.65)} {'DoS': ['pod', 'teardrop'], 'Probe': ['satan'], 'R2L': ['ftp_write', 'spy', 'warezclient'], 'U2R': ['loadmodule']}
+S 4 {'low': 0.5, 'certain': 0.9, 'macro_f1': 48.68, 'routed': np.float64(3.95)} {'DoS': ['smurf', 'teardrop'], 'Probe': ['satan'], 'R2L': ['imap', 'multihop', 'warezclient'], 'U2R': ['loadmodule']}
+S 5 {'low': 0.5, 'certain': 0.9, 'macro_f1': 29.04, 'routed': np.float64(11.48)} {'DoS': ['neptune', 'teardrop'], 'Probe': ['ipsweep'], 'R2L': ['guess_passwd', 'imap', 'spy'], 'U2R': ['perl']}
+S 6 {'low': 0.5, 'certain': 0.9, 'macro_f1': 45.02, 'routed': np.float64(4.05)} {'DoS': ['smurf', 'teardrop'], 'Probe': ['satan'], 'R2L': ['ftp_write', 'imap', 'phf'], 'U2R': ['perl']}
+S 7 {'low': 0.6, 'certain': 0.99, 'macro_f1': 52.77, 'routed': np.float64(5.54)} {'DoS': ['pod', 'teardrop'], 'Probe': ['satan'], 'R2L': ['guess_passwd', 'phf', 'spy'], 'U2R': ['loadmodule']}
+S 8 {'low': 0.5, 'certain': 0.9, 'macro_f1': 26.96, 'routed': np.float64(22.22)} {'DoS': ['back', 'neptune'], 'Probe': ['satan'], 'R2L': ['imap', 'multihop', 'warezclient'], 'U2R': ['rootkit']}
+S 9 {'low': 0.9, 'certain': 0.9, 'macro_f1': 56.83, 'routed': np.float64(4.21)} {'DoS': ['land', 'teardrop'], 'Probe': ['satan'], 'R2L': ['phf', 'spy', 'warezmaster'], 'U2R': ['perl']}
+V 0 {'low': 0.7, 'certain': 0.95, 'macro_f1': 95.85, 'routed': np.float64(0.15)} None
+V 1 {'low': 0.5, 'certain': 0.99, 'macro_f1': 92.88, 'routed': np.float64(0.27)} None
+V 2 {'low': 0.5, 'certain': 0.99, 'macro_f1': 93.71, 'routed': np.float64(0.23)} None
+V 3 {'low': 0.7, 'certain': 0.9, 'macro_f1': 96.64, 'routed': np.float64(0.07)} None
+V 4 {'low': 0.8, 'certain': 0.9, 'macro_f1': 93.55, 'routed': np.float64(0.14)} None
+V 5 {'low': 0.7, 'certain': 0.9, 'macro_f1': 96.42, 'routed': np.float64(0.07)} None
+V 6 {'low': 0.5, 'certain': 0.9, 'macro_f1': 92.97, 'routed': np.float64(0.06)} None
+V 7 {'low': 0.5, 'certain': 0.95, 'macro_f1': 96.91, 'routed': np.float64(0.1)} None
+V 8 {'low': 0.6, 'certain': 0.95, 'macro_f1': 95.3, 'routed': np.float64(0.13)} None
+V 9 {'low': 0.8, 'certain': 0.9, 'macro_f1': 96.61, 'routed': np.float64(0.15)} None
