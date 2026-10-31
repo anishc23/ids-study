@@ -73,6 +73,13 @@ than the gate's 54.15%. The earlier figure is kept in `results/` as superseded a
 labelled test-tuned. The expected direction is lower than 61.59, and Arm S may
 choose a different `certain` threshold from 0.999.
 
+## Amendment 1, made before any test evaluation
+
+Seed 8 of Arm S stopped the first tuning run: no grid row met the 15% cap, a case
+the rule above did not cover. No test data had been read. The added rule: if no row
+meets the cap, take the row with the smallest routed share, which is the choice
+closest to the cap. This amendment was committed before tuning was rerun.
+
 ## Known limits
 
 Test rows are resampled individually, and NSL-KDD has no session structure to

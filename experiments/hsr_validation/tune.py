@@ -50,7 +50,10 @@ def select(df, y, enc, fit, val, seed):
                          'macro_f1': round(100 * f1_score(y[val], p, average='macro', zero_division=0), 2),
                          'routed': round(100 * m.mean(), 2)})
     ok = [g for g in grid if g['routed'] <= ROUTE_CAP]
-    best = max(ok, key=lambda g: g['macro_f1'])      # max keeps the first on ties
+    if ok:
+        best = max(ok, key=lambda g: g['macro_f1'])  # max keeps the first on ties
+    else:
+        best = min(grid, key=lambda g: g['routed'])  # amendment 1 in PROTOCOL.md
     return best, grid
 
 
