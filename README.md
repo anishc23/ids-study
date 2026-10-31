@@ -3,9 +3,11 @@
 A reproducible study of network intrusion detection on the NSL-KDD benchmark, in two parts:
 
 1. **A comparative benchmark** of seven classical machine learning algorithms across binary and five-class formulations, evaluated on eight metrics with cross-validation and paired significance testing.
-2. **HSR-IDS** (*Hierarchical Specialist Router for Intrusion Detection*) — a proposed two-stage architecture that targets the rare-attack failure mode the benchmark exposes, raising Macro-F1 from **54.15% to 61.59%** and R2L F1 from **1.51% to 23.40%** (~16×) while routing only **11.39%** of traffic to the second stage.
+2. **HSR-IDS** (*Hierarchical Specialist Router for Intrusion Detection*) — a two-stage architecture targeting the rare-attack failure mode the benchmark exposes.
 
-All numbers in this README come from the committed CSVs under `results/`. Nothing here is estimated or rounded from memory.
+> **Correction.** This README previously headlined Macro-F1 54.15% → 61.59% and R2L F1 1.51% → 23.40% at 11.39% routed. Those thresholds were selected on the test set. With thresholds selected on training data only, under a protocol [committed before it ran](experiments/hsr_validation/PROTOCOL.md), HSR-IDS reaches a **median Macro-F1 of 57.51%** over ten seeds (range 54.81–61.45), with **median R2L F1 of 4.13%** and a median 4.33% routed. It still beats its XGBoost gate (+3.36 points, 95% CI [1.50, 5.36]), mainly on U2R. However, **plain XGBoost with SMOTE on all classes reaches a median 61.61%** with no routing and no thresholds. See [Corrected results](#corrected-results).
+
+All numbers in this README come from the committed files under `results/` and `experiments/hsr_validation/`. Nothing here is estimated or rounded from memory.
 
 ---
 
@@ -22,7 +24,8 @@ All numbers in this README come from the committed CSVs under `results/`. Nothin
 - [Part 2 — HSR-IDS](#part-2--hsr-ids)
   - [Architecture](#architecture)
   - [The routing rule](#the-routing-rule-and-why-it-is-not-the-obvious-one)
-  - [Results](#hsr-ids-results)
+  - [Corrected results](#corrected-results)
+  - [Superseded test-tuned results](#superseded-test-tuned-results)
   - [Ablation](#ablation-what-actually-does-the-work)
   - [Threshold sensitivity](#threshold-sensitivity)
   - [SHAP interpretability](#shap-interpretability)
@@ -44,7 +47,7 @@ This study asks two questions:
 1. **How bad is the rare-class problem, exactly, and is it universal?** We benchmark seven algorithms and report per-class F1, not just aggregates.
 2. **Can it be fixed without degrading the common classes or the throughput?** Most rare-class remedies (global resampling, cost-sensitive loss, full ensembles) trade majority-class performance or inference cost for minority-class recall. HSR-IDS is designed to avoid both trades.
 
-The central empirical finding motivating the method: **no single model is best everywhere.** XGBoost has the highest Macro-F1 among strong models but the *worst* R2L F1 (1.51%). Naive Bayes has the worst overall Macro-F1 (34.95%) but the *best* R2L F1 (36.71%). KNN is best at U2R (42.00%). The models disagree most precisely on the rare classes — which is an opening, not just a nuisance.
+The central empirical finding motivating the method: **no single model is best everywhere.** XGBoost is the best binary model but only fifth of seven by Macro-F1, and it has the second-worst R2L F1 (1.51%; Logistic Regression is 0.48%). Naive Bayes has the worst overall Macro-F1 (34.95%) but the *best* R2L F1 (36.71%). KNN is best at U2R (42.00%). The models disagree most precisely on the rare classes — which is an opening, not just a nuisance.
 
 ---
 
@@ -143,6 +146,8 @@ The ~20-point gap between these cross-validated scores and the held-out test sco
 
 XGBoost's advantage is statistically significant over five of six competitors. **Against Random Forest it is not** (p = 0.0875) — reported here rather than omitted.
 
+**What these tests cover.** They compare binary F1 by cross-validation inside `KDDTrain+`, where all strong models score near 99%. They say nothing about test performance, where XGBoost and Gradient Boosting are 80.10 and 80.05, or about HSR-IDS. The tests for HSR-IDS are in [Corrected results](#corrected-results).
+
 ### Five-class classification
 
 Source: `results/multiclass_results.csv`. This is where the rare-class problem becomes unavoidable.
@@ -161,7 +166,7 @@ Source: `results/multiclass_results.csv`. This is where the rare-class problem b
 
 **Finding 2 — R2L is a universal failure.** The range is 0.48% to 36.71%. R2L traffic is behaviourally near-identical to a legitimate user mistyping a password; the feature set simply does not carry enough signal, and 995 training examples are not enough to find what signal exists.
 
-**Finding 3 — The ranking inverts by class.** XGBoost, the strongest overall model, is the *second worst* at R2L. Naive Bayes, the weakest overall, is the *best* at R2L — its independence assumption, wrong for network data in general, happens not to be swamped by the majority classes the way discriminative models are. KNN leads on U2R.
+**Finding 3 — The ranking inverts by class.** XGBoost, the strongest binary model, is the *second worst* at R2L. Naive Bayes, the weakest overall, is the *best* at R2L — its independence assumption, wrong for network data in general, happens not to be swamped by the majority classes the way discriminative models are. KNN leads on U2R.
 
 Finding 3 is the direct motivation for HSR-IDS: if models have complementary and class-specific blind spots, a single monolithic classifier is the wrong shape for the problem.
 
@@ -214,7 +219,7 @@ HSR-IDS is a two-stage cascade. The analogy is triage: a general practitioner se
                     │ ROUTING RULE  │
                     └───┬───────┬───┘
              route      │       │      accept gate verdict
-          (11.39%)      │       │          (88.61%)
+     (see results)      │       │
                         ▼       ▼
         ┌───────────────────────┐   final prediction
         │ STAGE 2 — SPECIALIST  │
@@ -226,7 +231,7 @@ HSR-IDS is a two-stage cascade. The analogy is triage: a general practitioner se
             final prediction
 ```
 
-**Stage 1 — The Gate.** A standard 5-class XGBoost trained on the full training set. It produces a predicted class and a confidence (max softmax probability). It handles DoS, Probe, and unambiguous normal traffic well, which is 88.61% of test traffic.
+**Stage 1 — The Gate.** A standard 5-class XGBoost trained on the full training set. It produces a predicted class and a confidence (max softmax probability). It handles DoS, Probe, and unambiguous normal traffic well.
 
 **Stage 2 — The Specialist.** A second XGBoost trained on a *restricted* three-class problem: `{normal, R2L, U2R}`. Narrowing the label space means the decision boundary no longer has to accommodate DoS and Probe, and the rare classes are no longer competing against 45,927 DoS instances for model capacity.
 
@@ -236,8 +241,10 @@ Its training set is SMOTE-balanced: R2L is synthesized from 995 up to 67,343, U2
 
 A sample is escalated to the specialist if **either**:
 
-- **(a)** Gate confidence < **0.50** — the Gate is genuinely uncertain; **or**
-- **(b)** Gate predicts `normal` with confidence < **0.999** — the Gate is confident, but not near-certain.
+- **(a)** Gate confidence < *low* — the Gate is genuinely uncertain; **or**
+- **(b)** Gate predicts `normal` with confidence < *certain* — the Gate is confident, but not near-certain.
+
+The values are selected from a 5×5 grid. Training-data selection gives (0.5, 0.9) most often; the published (0.5, 0.999) came from the test set.
 
 Condition (b) is the non-obvious component and it is what makes the method work.
 
@@ -245,9 +252,54 @@ The intuitive design is "escalate when the model is unsure." **That design fails
 
 Condition (b) therefore re-examines *suspiciously confident normal verdicts*, exploiting an asymmetry in the cost structure: a `normal` verdict that is wrong is a missed intrusion, whereas an attack verdict that is wrong is a false alarm. The threshold is asymmetric because the errors are.
 
-This is also why HSR-IDS is not an ordinary ensemble. Standard ensembles evaluate every model on every sample and average. HSR-IDS (i) invokes the second model on ~11% of samples, (ii) scopes it to the specific known weakness, and (iii) triggers on a *directional* error mode rather than on generic uncertainty.
+This is also why HSR-IDS is not an ordinary ensemble. Standard ensembles evaluate every model on every sample and average. HSR-IDS (i) invokes the second model on a minority of samples, (ii) scopes it to the specific known weakness, and (iii) triggers on a *directional* error mode rather than on generic uncertainty.
 
-### HSR-IDS results
+### Corrected results
+
+Source: `experiments/hsr_validation/`. The protocol was fixed before tuning ran. `tune.py` cannot open `KDDTest+`, and thresholds were committed before `final_eval.py` ran once. `reproduce_baseline.py` reproduces the earlier run exactly, so these changes come from the protocol alone.
+
+The primary arm holds out whole attack types for validation, a third per category, to preserve the novelty shift HSR-IDS targets. Ten seeds; each result refits on all of `KDDTrain+`.
+
+| Model | Macro-F1 % | R2L F1 % | U2R F1 % | Routed % |
+|---|---:|---:|---:|---:|
+| XGBoost gate alone | 54.15 | 1.51 | 25.00 | 0 |
+| Gradient Boosting | 58.03 | 12.58 | 37.36 | — |
+| XGBoost, balanced class weights | 58.77 | 16.39 | 30.23 | — |
+| **HSR-IDS, thresholds from training data** (median of 10) | **57.51** (54.81–61.45) | **4.13** (4.06–25.74) | **38.42** (34.48–42.70) | 4.33 (3.15–11.39) |
+| HSR-IDS, stratified control arm (median of 10) | 57.53 (55.59–59.88) | 4.46 (4.06–11.76) | 38.86 (34.48–45.16) | 4.52 (3.15–6.14) |
+| **XGBoost, SMOTE on all classes** (median of 10) | **61.61** (61.04–62.79) | **21.99** (18.44–24.55) | **40.84** (36.17–45.36) | — |
+| *Superseded: HSR-IDS tuned on test* | *61.59* | *23.40* | *39.13* | *11.39* |
+
+Per-class comparator scores come from `comparators_detail.py`, an exploratory addition: the protocol fixed only their Macro-F1.
+
+**Reported model** (modal thresholds 0.5 and 0.9, seed 42):
+
+| Class | Gate precision / recall / F1 | HSR-IDS precision / recall / F1 |
+|---|---:|---:|
+| DoS | 96.07 / 80.05 / 87.33 | 96.07 / 80.05 / 87.33 |
+| Probe | 86.48 / 71.62 / 78.36 | 86.48 / 71.58 / 78.33 |
+| R2L | 81.48 / 0.76 / 1.51 | 89.71 / 2.11 / 4.13 |
+| U2R | 76.92 / 14.93 / 25.00 | 85.00 / 25.37 / 39.08 |
+| normal | 65.97 / 97.04 / 78.55 | 66.18 / 97.03 / 78.69 |
+
+Macro-F1 difference against the gate: **+3.36, 95% paired-bootstrap CI [1.50, 5.36]**. McNemar: 46 connections correct only under HSR-IDS, 2 only under the gate, exact p ≈ 8×10⁻¹². Test rows are resampled individually.
+
+**What survives.** The gate's failure is confident error, as diagnosed. A specialist improves on the gate, chiefly on U2R, at low routing cost, and common classes hold.
+
+**What does not.**
+
+- **The R2L claim.** R2L F1 of 23.40% depends on `certain` = 0.999, and training data selected that value on 1 seed of 10. Without it, R2L stays near 4%.
+- **The Macro-F1 claim.** Test-tuned selection on the same models gives a median 61.63%, so selection on the test set contributed a median 4.29 points. An earlier version of this README called the optimism small. It is not.
+- **The claim to beat simple resampling.** Global SMOTE on the same XGBoost beats validated HSR-IDS by about 4 points and matches the published figure, without thresholds. Against the gate its DoS F1 falls by about 1.5 points and Probe rises by about 2.
+- **The stability claim.** Selected thresholds vary across seeds, and a flat surface around 0.999 on the test set says nothing about whether 0.999 can be found without it.
+
+**Sensitivity.** Using partition-trained models without refitting gives a median 51.39% (33.73–53.82) in the primary arm, *below the gate*, since those models never saw the held-out attack types. The stratified arm gives 57.89%.
+
+**Limits.** The authors had already seen test results when designing the rule, the grid and the 15% cap, so this reduces the bias and cannot remove it. Attack-type hold-out approximates the real shift. A validated threshold may also be poorly chosen when validation attacks differ from test attacks; that is the problem a deployed system faces too.
+
+### Superseded test-tuned results
+
+The rest of Part 2 records the original run, with thresholds selected on `KDDTest+`. It is kept for transparency and should not be cited as an estimate of performance.
 
 Source: `results/hsr_ids_results.csv`
 
@@ -282,11 +334,11 @@ Reading it honestly:
 - **B → D (+1.32 points): SMOTE contributes a real but secondary gain**, concentrated in R2L (17.64 → 23.40).
 - **C → D (+0.07 points): selective routing is essentially free accuracy-wise but cuts routed traffic from 63.54% to 11.39%** — a 5.6× reduction in specialist invocations for 0.07 points of Macro-F1. It is an efficiency mechanism, and it is reported as one.
 
-Stating this breakdown rather than attributing everything to SMOTE is the point of running the ablation. The narrow specialist scope drives accuracy; SMOTE adds a secondary boost; routing buys efficiency.
+Stating this breakdown rather than attributing everything to SMOTE is the point of running the ablation. **All of it uses the test-tuned thresholds**, so it describes behaviour at that operating point only.
 
 ### Threshold sensitivity
 
-The two routing thresholds were selected by grid search over 25 combinations (`results/hsr_threshold_search.csv`), evaluating Macro-F1 and routed traffic percentage.
+This grid was evaluated on `KDDTest+`, which is the defect corrected above (`results/hsr_threshold_search.csv`).
 
 | low-conf ↓ / normal-certainty → | 0.9 | 0.95 | 0.99 | 0.999 | 0.9999 |
 |---|---:|---:|---:|---:|---:|
@@ -301,7 +353,7 @@ Two things this shows:
 - **The normal-certainty threshold dominates.** Moving it from 0.9 to 0.999 gains ~4 Macro-F1 points at every low-confidence setting. Moving the low-confidence threshold across its whole range costs ~2 points. Condition (b) is doing the heavy lifting, confirming the design rationale above.
 - **(0.5, 0.9999) scores marginally higher (61.61 vs 61.59) but routes 19.92% of traffic instead of 11.39%.** We selected 0.999: +0.02 Macro-F1 does not justify a 75% increase in specialist invocations. The selection criterion is stated so the choice can be audited.
 
-The surface is flat near the optimum — performance is not knife-edge sensitive to these values.
+The row is flat around 0.999, but the step from 0.99 to 0.999 is about 2.6 points, and that step is the one training data does not support.
 
 `results/hybrid_threshold_sweep.csv` records an earlier single-threshold sweep, which peaked at 58.69% Macro-F1 (threshold 0.95, 7.11% routed). The two-condition rule outperforms every point on that curve, which is the empirical justification for adding condition (b).
 
@@ -343,12 +395,13 @@ ids-study/
 │   ├── multiclass_results.csv            # 5-class per-model, per-class F1
 │   ├── feature_importance.csv            # ANOVA F-score vs RF importance, all 41 features
 │   ├── feature_ablation.csv              # F1 vs top-k feature subsets
-│   ├── hsr_ids_results.csv               # HEADLINE: Gate vs HSR-IDS per-class F1
+│   ├── hsr_ids_results.csv               # SUPERSEDED: test-tuned Gate vs HSR-IDS
 │   ├── ablation_2x2_results.csv          # SMOTE × routing factorial ablation
 │   ├── hsr_threshold_search.csv          # 5×5 routing threshold grid search
 │   ├── hsr_shap_r2l_top_features.csv     # TreeSHAP, specialist R2L predictions
 │   ├── hybrid_threshold_sweep.csv        # superseded single-threshold sweep (see below)
 │   └── proposed_hybrid_results.csv       # superseded intermediate hybrid (see below)
+├── experiments/hsr_validation/  # Corrected protocol, thresholds and results
 ├── figures/              # Generated plots
 ├── requirements.txt
 └── README.md
@@ -361,7 +414,7 @@ Two files in `results/` are from **earlier design iterations and are not the rep
 - **`proposed_hybrid_results.csv`** — an intermediate hybrid reaching R2L 3.45% and U2R 40.74%. It used a different specialist scope and a single-condition routing rule. **It is not HSR-IDS.** The final method is in `hsr_ids_results.csv` (R2L **23.40%**).
 - **`hybrid_threshold_sweep.csv`** — the single-threshold sweep that preceded the two-condition rule, peaking at 58.69% Macro-F1.
 
-If you are citing or reproducing this work, **`hsr_ids_results.csv` and `ablation_2x2_results.csv` are the authoritative result files.**
+`hsr_ids_results.csv`, `ablation_2x2_results.csv`, `hsr_threshold_search.csv` and `hsr_shap_r2l_top_features.csv` are also superseded as estimates: they use test-tuned thresholds. If you are citing this work, **`experiments/hsr_validation/validated_results.json` is the authoritative file.**
 
 ---
 
@@ -378,6 +431,8 @@ pip install -r requirements.txt
 
 The dataset is bundled in `data/`, so no further setup is needed. Open `notebooks/experiment.ipynb` and run all cells — it executes the full pipeline end to end and regenerates everything in `results/` and `figures/`.
 
+To reproduce the correction, from `experiments/hsr_validation/`: `python reproduce_baseline.py`, `python tune.py`, `python final_eval.py`, `python comparators_detail.py`.
+
 Core dependencies: `scikit-learn`, `xgboost`, `imbalanced-learn` (SMOTE), `shap`, `pandas`, `numpy`, `matplotlib`, `seaborn`, `scipy`.
 
 **Determinism.** Random seeds are fixed throughout (models, SMOTE, CV splits). Metrics should reproduce exactly on the same library versions. Timing columns in `main_results.csv` are hardware-dependent and will differ — the *ratios* (XGBoost ~37× faster than Gradient Boosting; KNN ~300× slower at inference) are the meaningful quantity.
@@ -388,11 +443,11 @@ Core dependencies: `scikit-learn`, `xgboost`, `imbalanced-learn` (SMOTE), `shap`
 
 Stated explicitly, because a reader should not have to discover them:
 
-1. **R2L at 23.40% F1 is still poor in absolute terms.** The claim is a ~16× relative improvement over the strongest baseline on a known-hard problem, not that R2L is solved. It is not.
+1. **Validated HSR-IDS does not beat simple resampling.** Global SMOTE on XGBoost reaches a median 61.61% against 57.51%, and R2L remains poorly detected by every approach.
 2. **NSL-KDD is a dated benchmark.** It derives from 1998 DARPA traffic and does not reflect modern encrypted traffic, application-layer attacks, or contemporary protocol mixes. It remains valuable as a *comparative* benchmark because the field's literature is calibrated on it, but results here should not be read as deployment-ready performance figures.
 3. **XGBoost's advantage over Random Forest is not statistically significant** (p = 0.0875). The choice of XGBoost as Gate rests on its AUC and training speed as much as on its F1.
-4. **Routing thresholds are tuned on the test set.** The grid search in `hsr_threshold_search.csv` evaluates against `KDDTest+`, which means the reported 61.59% is mildly optimistic as an estimate of performance on genuinely unseen data. The threshold surface is flat near the optimum (61.21–61.61 across the whole 0.999 column), so the optimism is small — but it is real and should be corrected in future work with a dedicated validation split.
-5. **The specialist inherits SMOTE's limitations.** Synthesizing 67,343 instances from 52 real U2R samples means the specialist's U2R decision region is largely interpolated. The U2R gain (25.00 → 39.13) should be treated as more fragile than the R2L gain.
+4. **The earlier thresholds were tuned on the test set, and the effect was not small.** Selection on training data lowers median Macro-F1 by 4.29 points and median R2L F1 to 4.13%. The rule itself was designed after seeing test results, so even the corrected estimate is not fully independent.
+5. **The specialist inherits SMOTE's limitations.** Synthesizing 67,343 instances from 52 real U2R samples means the specialist's U2R decision region is largely interpolated. The U2R gain (25.00 → about 38 to 39) should be treated as more fragile than the R2L gain.
 6. **Single-dataset evaluation.** No cross-dataset generalization is demonstrated.
 
 ---
@@ -400,7 +455,7 @@ Stated explicitly, because a reader should not have to discover them:
 ## Future Work
 
 - **Validate on modern traffic** — CICIDS2017 or UNSW-NB15, with a proper temporal split rather than a random one, to test whether the routing mechanism transfers.
-- **Fix the threshold-tuning protocol** — carve a validation partition out of `KDDTrain+` for threshold selection and reserve `KDDTest+` purely for final reporting.
+- **Test the diagnosis against resampling** — establish whether routing adds anything to a globally SMOTE-trained model, using training-data thresholds.
 - **Per-class routing thresholds** instead of the single two-condition rule, since R2L and U2R fail through different mechanisms.
 - **Alternative gates** — a deep gate (1D-CNN or transformer over connection features) may produce better-calibrated confidences, which would directly improve routing decisions.
 - **Confidence calibration** — condition (b) depends on the meaningfulness of the 0.999 threshold; temperature scaling or isotonic regression on the Gate's outputs may sharpen it.

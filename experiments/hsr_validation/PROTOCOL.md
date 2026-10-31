@@ -80,6 +80,17 @@ the rule above did not cover. No test data had been read. The added rule: if no 
 meets the cap, take the row with the smallest routed share, which is the choice
 closest to the cap. This amendment was committed before tuning was rerun.
 
+## Ordering record
+
+These commits were first pushed in order to a working branch, then re-created on
+`main` with unchanged content and dates when commit metadata was corrected. Git
+dates are self-reported, so the order is a stated record, not independent proof.
+
+## Addition after evaluation
+
+`comparators_detail.py` was added after `final_eval.py` ran, to report per-class
+scores for the comparators. It is exploratory. It selects nothing.
+
 ## Known limits
 
 Test rows are resampled individually, and NSL-KDD has no session structure to
